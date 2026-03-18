@@ -1,57 +1,110 @@
+/**
+ * BookMyStayApp.java
+ *
+ * This class demonstrates data persistence and recovery for the Hotel Booking
+ * Management System. Booking history and inventory state are serialized to a file
+ * and restored during system startup.
+ *
+ * @author YourName
+ * @version 12.1
+ */
+
+import java.io.*;
 import java.util.*;
-public class BookMyStayApp {
-    // Centralized inventory
-    private Map<String, Integer> inventory;
-    // Booking history
-    private List<String> bookingHistory;
 
-    // Constructor initializes inventory
-    public BookMyStayApp() {
-        inventory = new HashMap<>();
-        bookingHistory = new ArrayList<>();
+public class BookMyStayApp implements Serializable {
 
-        // Register room types with availability
-        inventory.put("Single Room", 2);
-        inventory.put("Double Room", 1);
-        inventory.put("Suite Room", 1);
-    }
+    private static final long serialVersionUID = 1L;
 
-    // Synchronized booking method
-    public synchronized void processBooking(String reservationId, String roomType, String guestName) {
-        int availability = inventory.getOrDefault(roomType, 0);
+    // Reservation model
+    static class Reservation implements Serializable {
+        private static final long serialVersionUID = 1L;
+        private String reservationId;
+        private String roomType;
+        private String guestName;
 
-        if (availability > 0) {
-            // Update inventory safely
-            inventory.put(roomType, availability - 1);
+        public Reservation(String reservationId, String roomType, String guestName) {
+            this.reservationId = reservationId;
+            this.roomType = roomType;
+            this.guestName = guestName;
+        }
 
-            // Record booking
-            String record = "Reservation ID: " + reservationId +
+        @Override
+        public String toString() {
+            return "Reservation ID: " + reservationId +
                     " | Guest: " + guestName +
                     " | Room Type: " + roomType;
-            bookingHistory.add(record);
-
-            System.out.println("Booking Confirmed: " + record);
-        } else {
-            System.out.println("Booking Failed for " + guestName +
-                    " (Reservation ID: " + reservationId +
-                    ") - No " + roomType + " available.");
         }
     }
 
-    // Display final inventory
-    public void displayInventory() {
-        System.out.println("\n=== Final Inventory ===");
-        for (Map.Entry<String, Integer> entry : inventory.entrySet()) {
-            System.out.println("Room Type: " + entry.getKey() +
-                    " | Available: " + entry.getValue());
+    // Booking history and inventory
+    private List<Reservation> bookingHistory;
+    private Map<String, Integer> inventory;
+
+    // File for persistence
+    private static final String DATA_FILE = "bookingData.ser";
+
+    // Constructor initializes structures
+    public BookMyStayApp() {
+        bookingHistory = new ArrayList<>();
+        inventory = new HashMap<>();
+        inventory.put("Single Room", 2);
+        inventory.put("Double Room", 1);
+        inventory.put("Suite Room", 0);
+    }
+
+    // Confirm booking
+    public void confirmBooking(String reservationId, String roomType, String guestName) {
+        int availability = inventory.getOrDefault(roomType, 0);
+        if (availability > 0) {
+            inventory.put(roomType, availability - 1);
+            Reservation res = new Reservation(reservationId, roomType, guestName);
+            bookingHistory.add(res);
+            System.out.println("Booking Confirmed: " + res);
+        } else {
+            System.out.println("Booking Failed: No " + roomType + " available.");
         }
     }
 
     // Display booking history
     public void displayBookingHistory() {
         System.out.println("\n=== Booking History ===");
-        for (String record : bookingHistory) {
-            System.out.println(record);
+        if (bookingHistory.isEmpty()) {
+            System.out.println("No reservations found.");
+        } else {
+            for (Reservation res : bookingHistory) {
+                System.out.println(res);
+            }
+        }
+    }
+
+    // Display inventory
+    public void displayInventory() {
+        System.out.println("\n=== Current Inventory ===");
+        for (Map.Entry<String, Integer> entry : inventory.entrySet()) {
+            System.out.println("Room Type: " + entry.getKey() +
+                    " | Available: " + entry.getValue());
+        }
+    }
+
+    // Save state to file
+    public void saveState() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DATA_FILE))) {
+            oos.writeObject(this);
+            System.out.println("\nSystem state saved successfully.");
+        } catch (IOException e) {
+            System.out.println("Error saving state: " + e.getMessage());
+        }
+    }
+
+    // Load state from file
+    public static BookMyStayApp loadState() {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(DATA_FILE))) {
+            System.out.println("System state loaded successfully.\n");
+            return (BookMyStayApp) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("No previous state found. Starting fresh.\n");
+            return new BookMyStayApp();
         }
     }
 
@@ -59,37 +112,21 @@ public class BookMyStayApp {
     public static void main(String[] args) {
         System.out.println("Welcome to the Hotel Booking System!");
         System.out.println("Application: Book My Stay");
-        System.out.println("Version: 11.1\n");
+        System.out.println("Version: 12.1\n");
 
-        BookMyStayApp app = new BookMyStayApp();
+        // Load previous state if available
+        BookMyStayApp app = BookMyStayApp.loadState();
 
-        // Simulate multiple guests booking concurrently
-        Thread guest1 = new Thread(() -> app.processBooking("RES-5001", "Single Room", "Alice"));
-        Thread guest2 = new Thread(() -> app.processBooking("RES-5002", "Single Room", "Bob"));
-        Thread guest3 = new Thread(() -> app.processBooking("RES-5003", "Double Room", "Charlie"));
-        Thread guest4 = new Thread(() -> app.processBooking("RES-5004", "Suite Room", "Diana"));
-        Thread guest5 = new Thread(() -> app.processBooking("RES-5005", "Suite Room", "Eve")); // may fail
+        // Simulate bookings
+        app.confirmBooking("RES-6001", "Single Room", "Alice");
+        app.confirmBooking("RES-6002", "Double Room", "Bob");
+        app.confirmBooking("RES-6003", "Suite Room", "Charlie"); // fails
 
-        // Start threads
-        guest1.start();
-        guest2.start();
-        guest3.start();
-        guest4.start();
-        guest5.start();
-
-        // Wait for all threads to finish
-        try {
-            guest1.join();
-            guest2.join();
-            guest3.join();
-            guest4.join();
-            guest5.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        // Display final state
+        // Display state
         app.displayBookingHistory();
         app.displayInventory();
+
+        // Save state before shutdown
+        app.saveState();
     }
 }
