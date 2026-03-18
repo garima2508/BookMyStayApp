@@ -1,49 +1,75 @@
 import java.util.*;
 public class BookMyStayApp {
-    // Map reservation IDs to selected services
-    private Map<String, List<String>> reservationServices;
-    // Map service names to their costs
-    private Map<String, Double> serviceCatalog;
+    // Reservation model
+    static class Reservation {
+        private String reservationId;
+        private String roomType;
+        private String guestName;
 
-    // Constructor initializes structures
-    public BookMyStayApp() {
-        reservationServices = new HashMap<>();
-        serviceCatalog = new HashMap<>();
-
-        // Register available services
-        serviceCatalog.put("Breakfast", 15.0);
-        serviceCatalog.put("Airport Pickup", 30.0);
-        serviceCatalog.put("Spa Access", 50.0);
-        serviceCatalog.put("Extra Bed", 20.0);
-    }
-
-    // Attach services to a reservation
-    private void addServicesToReservation(String reservationId, List<String> services) {
-        reservationServices.putIfAbsent(reservationId, new ArrayList<>());
-        reservationServices.get(reservationId).addAll(services);
-    }
-
-    // Calculate total additional cost for a reservation
-    private double calculateAdditionalCost(String reservationId) {
-        List<String> services = reservationServices.getOrDefault(reservationId, Collections.emptyList());
-        double total = 0.0;
-        for (String service : services) {
-            total += serviceCatalog.getOrDefault(service, 0.0);
+        public Reservation(String reservationId, String roomType, String guestName) {
+            this.reservationId = reservationId;
+            this.roomType = roomType;
+            this.guestName = guestName;
         }
-        return total;
+
+        public String getReservationId() {
+            return reservationId;
+        }
+
+        public String getRoomType() {
+            return roomType;
+        }
+
+        public String getGuestName() {
+            return guestName;
+        }
+
+        @Override
+        public String toString() {
+            return "Reservation ID: " + reservationId +
+                    " | Guest: " + guestName +
+                    " | Room Type: " + roomType;
+        }
     }
 
-    // Display reservation services and costs
-    private void displayReservationDetails(String reservationId) {
-        System.out.println("=== Reservation Details ===");
-        System.out.println("Reservation ID: " + reservationId);
+    // Booking history stored in insertion order
+    private List<Reservation> bookingHistory;
 
-        List<String> services = reservationServices.getOrDefault(reservationId, Collections.emptyList());
-        if (services.isEmpty()) {
-            System.out.println("No add-on services selected.");
+    // Constructor initializes booking history
+    public BookMyStayApp() {
+        bookingHistory = new ArrayList<>();
+    }
+
+    // Add confirmed reservation to history
+    private void addReservation(Reservation reservation) {
+        bookingHistory.add(reservation);
+    }
+
+    // Display all reservations in history
+    private void displayBookingHistory() {
+        System.out.println("=== Booking History ===");
+        if (bookingHistory.isEmpty()) {
+            System.out.println("No reservations found.");
         } else {
-            System.out.println("Selected Services: " + services);
-            System.out.println("Additional Cost: $" + calculateAdditionalCost(reservationId));
+            for (Reservation res : bookingHistory) {
+                System.out.println(res);
+            }
+        }
+        System.out.println();
+    }
+
+    // Generate a simple report: count by room type
+    private void generateReport() {
+        System.out.println("=== Booking Report ===");
+        Map<String, Integer> report = new HashMap<>();
+
+        for (Reservation res : bookingHistory) {
+            report.put(res.getRoomType(), report.getOrDefault(res.getRoomType(), 0) + 1);
+        }
+
+        for (Map.Entry<String, Integer> entry : report.entrySet()) {
+            System.out.println("Room Type: " + entry.getKey() +
+                    " | Total Bookings: " + entry.getValue());
         }
         System.out.println();
     }
@@ -52,20 +78,19 @@ public class BookMyStayApp {
     public static void main(String[] args) {
         System.out.println("Welcome to the Hotel Booking System!");
         System.out.println("Application: Book My Stay");
-        System.out.println("Version: 7.1\n");
+        System.out.println("Version: 8.1\n");
 
         BookMyStayApp app = new BookMyStayApp();
 
-        // Example reservations
-        String reservation1 = "RES-1001";
-        String reservation2 = "RES-1002";
+        // Simulate confirmed reservations
+        app.addReservation(new Reservation("RES-2001", "Single Room", "Alice"));
+        app.addReservation(new Reservation("RES-2002", "Double Room", "Bob"));
+        app.addReservation(new Reservation("RES-2003", "Single Room", "Charlie"));
 
-        // Guest selects services
-        app.addServicesToReservation(reservation1, Arrays.asList("Breakfast", "Spa Access"));
-        app.addServicesToReservation(reservation2, Arrays.asList("Airport Pickup", "Extra Bed"));
+        // Admin views booking history
+        app.displayBookingHistory();
 
-        // Display reservation details
-        app.displayReservationDetails(reservation1);
-        app.displayReservationDetails(reservation2);
+        // Admin generates report
+        app.generateReport();
     }
 }
