@@ -3,63 +3,55 @@ import java.util.Map;
 public class BookMyStayApp {
     // Centralized inventory using HashMap
     private Map<String, Integer> inventory;
+    // Room details (price per night)
+    private Map<String, Double> roomDetails;
 
-    // Constructor initializes the inventory
+    // Constructor initializes inventory and room details
     public BookMyStayApp() {
         inventory = new HashMap<>();
+        roomDetails = new HashMap<>();
+
+        // Register room types with availability
+        inventory.put("Single Room", 5);
+        inventory.put("Double Room", 3);
+        inventory.put("Suite Room", 0); // Example: no suites available
+
+        // Register room details
+        roomDetails.put("Single Room", 50.0);
+        roomDetails.put("Double Room", 90.0);
+        roomDetails.put("Suite Room", 150.0);
     }
 
-    // Register a room type with its availability
-    private void addRoomType(String roomType, int availability) {
-        inventory.put(roomType, availability);
-    }
-
-    // Retrieve availability for a given room type
-    private int getAvailability(String roomType) {
-        return inventory.getOrDefault(roomType, 0);
-    }
-
-    // Update availability (e.g., after booking or cancellation)
-    private void updateAvailability(String roomType, int newAvailability) {
-        if (inventory.containsKey(roomType)) {
-            inventory.put(roomType, newAvailability);
-        } else {
-            System.out.println("Room type not found: " + roomType);
-        }
-    }
-
-    // Display the current inventory state
-    private void displayInventory() {
-        System.out.println("=== Current Room Inventory ===");
+    // Read-only search method
+    private void searchAvailableRooms() {
+        System.out.println("=== Room Search Results ===");
         for (Map.Entry<String, Integer> entry : inventory.entrySet()) {
-            System.out.println("Room Type: " + entry.getKey() + " | Available: " + entry.getValue());
+            String roomType = entry.getKey();
+            int availability = entry.getValue();
+
+            // Defensive check: only show rooms with availability > 0
+            if (availability > 0) {
+                double price = roomDetails.getOrDefault(roomType, 0.0);
+                System.out.println("Room Type: " + roomType);
+                System.out.println("Price per Night: $" + price);
+                System.out.println("Available: " + availability + "\n");
+            }
         }
-        System.out.println();
     }
 
     // Application entry point
     public static void main(String[] args) {
         System.out.println("Welcome to the Hotel Booking System!");
         System.out.println("Application: Book My Stay");
-        System.out.println("Version: 3.1\n");
+        System.out.println("Version: 4.1\n");
 
-        // Initialize inventory system
+        // Initialize app
         BookMyStayApp app = new BookMyStayApp();
 
-        // Register room types with availability
-        app.addRoomType("Single Room", 5);
-        app.addRoomType("Double Room", 3);
-        app.addRoomType("Suite Room", 2);
+        // Guest initiates search
+        System.out.println("Guest is searching for available rooms...\n");
+        app.searchAvailableRooms();
 
-        // Display initial inventory
-        app.displayInventory();
-
-        // Example update: one Single Room booked
-        System.out.println("Booking a Single Room...");
-        app.updateAvailability("Single Room", app.getAvailability("Single Room") - 1);
-
-        // Display updated inventory
-        app.displayInventory();
+        // Program terminates without modifying inventory
     }
-
 }
