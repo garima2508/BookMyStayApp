@@ -1,41 +1,65 @@
+import java.util.HashMap;
+import java.util.Map;
 public class BookMyStayApp {
-    // Inner helper method to display room details
-    private static void displayRoom(String roomType, int beds, double price, int availability) {
-        System.out.println("Room Type: " + roomType);
-        System.out.println("Beds: " + beds);
-        System.out.println("Price per Night: $" + price);
-        System.out.println("Available: " + availability + "\n");
+    // Centralized inventory using HashMap
+    private Map<String, Integer> inventory;
+
+    // Constructor initializes the inventory
+    public BookMyStayApp() {
+        inventory = new HashMap<>();
     }
 
-    /**
-     * Application entry point.
-     * Initializes room details and prints availability.
-     *
-     * @param args Command-line arguments (not used here).
-     */
+    // Register a room type with its availability
+    private void addRoomType(String roomType, int availability) {
+        inventory.put(roomType, availability);
+    }
+
+    // Retrieve availability for a given room type
+    private int getAvailability(String roomType) {
+        return inventory.getOrDefault(roomType, 0);
+    }
+
+    // Update availability (e.g., after booking or cancellation)
+    private void updateAvailability(String roomType, int newAvailability) {
+        if (inventory.containsKey(roomType)) {
+            inventory.put(roomType, newAvailability);
+        } else {
+            System.out.println("Room type not found: " + roomType);
+        }
+    }
+
+    // Display the current inventory state
+    private void displayInventory() {
+        System.out.println("=== Current Room Inventory ===");
+        for (Map.Entry<String, Integer> entry : inventory.entrySet()) {
+            System.out.println("Room Type: " + entry.getKey() + " | Available: " + entry.getValue());
+        }
+        System.out.println();
+    }
+
+    // Application entry point
     public static void main(String[] args) {
         System.out.println("Welcome to the Hotel Booking System!");
         System.out.println("Application: Book My Stay");
-        System.out.println("Version: 2.1\n");
+        System.out.println("Version: 3.1\n");
 
-        // Static availability variables
-        int singleRoomAvailability = 5;
-        int doubleRoomAvailability = 3;
-        int suiteRoomAvailability = 2;
+        // Initialize inventory system
+        BookMyStayApp app = new BookMyStayApp();
 
-        System.out.println("=== Room Details & Availability ===");
+        // Register room types with availability
+        app.addRoomType("Single Room", 5);
+        app.addRoomType("Double Room", 3);
+        app.addRoomType("Suite Room", 2);
 
-        // Display Single Room
-        displayRoom("Single Room", 1, 50.0, singleRoomAvailability);
+        // Display initial inventory
+        app.displayInventory();
 
-        // Display Double Room
-        displayRoom("Double Room", 2, 90.0, doubleRoomAvailability);
+        // Example update: one Single Room booked
+        System.out.println("Booking a Single Room...");
+        app.updateAvailability("Single Room", app.getAvailability("Single Room") - 1);
 
-        // Display Suite Room
-        displayRoom("Suite Room", 3, 150.0, suiteRoomAvailability);
-
-        // Program terminates after displaying information
+        // Display updated inventory
+        app.displayInventory();
     }
-
 
 }
